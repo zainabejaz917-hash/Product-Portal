@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+    /* ─── AUTH PAGE ─── */
+    #auth-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .auth-box {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 420px;
+    }
+    .auth-box h2 { text-align: center; margin-bottom: 24px; color: #333; }
+    .tabs { display: flex; margin-bottom: 24px; border-bottom: 2px solid #eee; }
+    .tab {
+      flex: 1; text-align: center; padding: 10px;
+      cursor: pointer; color: #888; font-weight: 600; transition: all 0.3s;
+    }
+    .tab.active { color: #4f46e5; border-bottom: 2px solid #4f46e5; margin-bottom: -2px; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; font-weight: 500; }
+    input[type=text], input[type=email], input[type=password], input[type=number], textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 15px; outline: none; transition: border 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #4f46e5; }
+    .btn {
+      padding: 10px 20px; background: #4f46e5; color: white;
+      border: none; border-radius: 8px; font-size: 15px;
+      font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .btn:hover { background: #4338ca; }
+    .btn-full { width: 100%; margin-top: 8px; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    .msg {
+      margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+      text-align: center; font-size: 14px; display: none;
+    }
+    .msg.success { background: #d1fae5; color: #065f46; display: block; }
+    .msg.error   { background: #fee2e2; color: #991b1b; display: block; }
+
+    /* ─── PRODUCTS PAGE ─── */
+    #products-page { display: none; }
+    .navbar {
+      background: #4f46e5; color: white; padding: 14px 30px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .navbar h1 { font-size: 20px; }
+    .navbar span { font-size: 14px; opacity: 0.85; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; }
+
+    .main { padding: 30px; max-width: 1100px; margin: auto; }
+
+    /* Add Product Form */
+    .add-form {
+      background: white; padding: 24px; border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px;
+    }
+    .add-form h3 { margin-bottom: 18px; color: #333; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+
+    /* Products Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: white; border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .product-card:hover { transform: translateY(-3px); }
+    .product-card img {
+      width: 100%; height: 180px; object-fit: cover;
+      background: #eee;
+    }
+    .no-img {
+      width: 100%; height: 180px; background: #e0e7ff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+    }
+    .card-body { padding: 16px; }
+    .card-body h4 { font-size: 16px; color: #333; margin-bottom: 6px; }
+    .card-body p { font-size: 13px; color: #777; margin-bottom: 10px; }
+    .card-body .price { font-size: 18px; font-weight: 700; color: #4f46e5; margin-bottom: 12px; }
+    .card-actions { display: flex; gap: 8px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 12px; padding: 30px;
+      width: 90%; max-width: 460px;
+    }
+    .modal h3 { margin-bottom: 18px; color: #333; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+
+    .empty { text-align: center; padding: 60px; color: #aaa; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ AUTH PAGE ════════════ -->
+<div id="auth-page">
+  <div class="auth-box">
+    <h2>🛍️ My Shop</h2>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- Login -->
+    <div class="form-section active" id="login-section">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="Enter your email" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" />
+      </div>
+      <button class="btn btn-full" onclick="login()">Login</button>
+      <div class="msg" id="login-msg"></div>
+    </div>
+
+    <!-- Register -->
+    <div class="form-section" id="register-section">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="reg-name" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="Your email" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Create a password" />
+      </div>
+      <button class="btn btn-full" onclick="register()">Register</button>
+      <div class="msg" id="register-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PRODUCTS PAGE ════════════ -->
+<div id="products-page">
+  <div class="navbar">
+    <h1>🛍️ My Shop</h1>
+    <div class="navbar-right">
+      <span id="welcome-text"></span>
+      <button class="btn btn-sm btn-danger" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Add Product -->
+    <div class="add-form">
+      <h3>➕ Add New Product</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" id="p-name" placeholder="e.g. Enter product name" />
+        </div>
+        <div class="form-group">
+          <label>Price (Rs.)</label>
+          <input type="number" id="p-price" placeholder="e.g. Price" />
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea id="p-desc" placeholder="Product description..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Image</label>
+          <input type="file" id="p-image" accept="image/*" />
+        </div>
+      </div>
+      <button class="btn" onclick="addProduct()">Add Product</button>
+      <div class="msg" id="product-msg"></div>
+    </div>
+
+    <!-- Products List -->
+    <div class="products-grid" id="products-grid">
+      <div class="empty">Loading products...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ EDIT MODAL ════════════ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>✏️ Edit Product</h3>
+    <input type="hidden" id="edit-id" />
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="edit-name" />
+    </div>
+    <div class="form-group">
+      <label>Price</label>
+      <input type="number" id="edit-price" />
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="edit-desc"></textarea>
+    </div>
+    <div class="form-group">
+      <label>New Image (optional)</label>
+      <input type="file" id="edit-image" accept="image/*" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="updateProduct()">Save Changes</button>
+    </div>
+    <div class="msg" id="edit-msg"></div>
+  </div>
+</div>
+
+<script>
+  let token = localStorage.getItem('token');
+  let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+  // ── On Load ──
+  window.onload = () => {
+    if (token && currentUser) showProductsPage();
+    else showAuthPage();
+  };
+
+  function showAuthPage() {
+    document.getElementById('auth-page').style.display = 'flex';
+    document.getElementById('products-page').style.display = 'none';
+  }
+
+  function showProductsPage() {
+    document.getElementById('auth-page').style.display = 'none';
+    document.getElementById('products-page').style.display = 'block';
+    document.getElementById('welcome-text').textContent = '👋 ' + currentUser.name;
+    loadProducts();
+  }
+
+  // ── Tab Switch ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(tab + '-section').classList.add('active');
+    document.querySelectorAll('.tab')[tab === 'login' ? 0 : 1].classList.add('active');
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
+    setTimeout(() => el.className = 'msg', 3000);
+  }
+
+  // ── AUTH ──
+  async function login() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return showMsg('login-msg', 'Fill all fields', 'error');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg('login-msg', data.message || 'Login failed', 'error');
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      showProductsPage();
+    } catch { showMsg('login-msg', 'Server error', 'error'); }
+  }
+
+  async function register() {
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    if (!name || !email || !password) return showMsg('register-msg', 'Fill all fields', 'error');
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg('register-msg', data.message || 'Failed', 'error');
+      showMsg('register-msg', 'Registered! Please login.', 'success');
+      setTimeout(() => switchTab('login'), 1500);
+    } catch { showMsg('register-msg', 'Server error', 'error'); }
+  }
+
+  function logout() {
+    localStorage.clear();
+    token = null; currentUser = null;
+    showAuthPage();
+  }
+
+  // ── PRODUCTS ──
+  async function loadProducts() {
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = '<div class="empty">Loading...</div>';
+    try {
+      const res = await fetch('/api/products', { headers: { Authorization: 'Bearer ' + token } });
+      const products = await res.json();
+      if (!products.length) { grid.innerHTML = '<div class="empty">No products yet. Add one above!</div>'; return; }
+      grid.innerHTML = products.map(p => `
+        <div class="product-card">
+          ${p.image ? `<img src="/uploads/${p.image}" alt="${p.name}" />` : '<div class="no-img">📦</div>'}
+          <div class="card-body">
+            <h4>${p.name}</h4>
+            <p>${p.description || 'No description'}</p>
+            <div class="price">Rs. ${parseFloat(p.price).toLocaleString()}</div>
+            <div class="card-actions">
+              <button class="btn btn-sm" onclick='openEdit(${JSON.stringify(p)})'>✏️ Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">🗑️ Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } catch { grid.innerHTML = '<div class="empty">Failed to load products.</div>'; }
+  }
+
+  async function addProduct() {
+    const name = document.getElementById('p-name').value;
+    const price = document.getElementById('p-price').value;
+    const desc = document.getElementById('p-desc').value;
+    const image = document.getElementById('p-image').files[0];
+    if (!name || !price) return showMsg('product-msg', 'Name and price required', 'error');
+    const form = new FormData();
+    form.append('name', name); form.append('price', price); form.append('description', desc);
+    if (image) form.append('image', image);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: form
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg('product-msg', data.message || 'Failed', 'error');
+      showMsg('product-msg', 'Product added!', 'success');
+      document.getElementById('p-name').value = '';
+      document.getElementById('p-price').value = '';
+      document.getElementById('p-desc').value = '';
+      document.getElementById('p-image').value = '';
+      loadProducts();
+    } catch { showMsg('product-msg', 'Server error', 'error'); }
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Delete this product?')) return;
+    try {
+      await fetch('/api/products/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+      loadProducts();
+    } catch { alert('Delete failed'); }
+  }
+
+  // ── EDIT MODAL ──
+  function openEdit(p) {
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('edit-name').value = p.name;
+    document.getElementById('edit-price').value = p.price;
+    document.getElementById('edit-desc').value = p.description || '';
+    document.getElementById('edit-image').value = '';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  async function updateProduct() {
+    const id = document.getElementById('edit-id').value;
+    const name = document.getElementById('edit-name').value;
+    const price = document.getElementById('edit-price').value;
+    const desc = document.getElementById('edit-desc').value;
+    const image = document.getElementById('edit-image').files[0];
+    const form = new FormData();
+    form.append('name', name); form.append('price', price); form.append('description', desc);
+    if (image) form.append('image', image);
+    try {
+      const res = await fetch('/api/products/' + id, {
+        method: 'PUT', headers: { Authorization: 'Bearer ' + token }, body: form
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg('edit-msg', data.message || 'Failed', 'error');
+      showMsg('edit-msg', 'Updated!', 'success');
+      setTimeout(() => { closeModal(); loadProducts(); }, 800);
+    } catch { showMsg('edit-msg', 'Server error', 'error'); }
+  }
+</script>
+</body>
+</html>
